@@ -1,0 +1,46 @@
+# Welcome to serverless. Read the docs
+# https://serverless.com/framework/docs/
+
+# Serverless.yml is the configuration the CLI
+# uses to deploy your code to your provider of choice
+
+# The `service` block is the name of the service
+service: ImageUploaderService
+
+
+frameworkVersion: '2'
+
+# The `provider` block defines where your service will be deployed
+custom: 
+  bucket: pep-image-upload-bucket
+provider:
+  lambdaHashingVersion: "20201221"
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-1
+  stackName: imageUploader
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
+      Resource:
+        - "arn:aws:s3:::${self:custom.bucket}/*"
+
+# The `functions` block defines what code to deploy
+functions:
+  UploadImage:
+    handler: uploadImage.handler
+    # The `events` block defines how to trigger the uploadImage.handlerd code
+    events:
+      - http:
+          path: upload
+          method: post
+          cors: true
+    environment: 
+      Bucket: ${self:custom.bucket}
+resources:
+  Resources:
+    StorageBucket:
+      Type: "AWS::S3::Bucket"
+      Properties: 
+        BucketName: ${self:custom.bucket}
